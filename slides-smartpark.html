@@ -156,6 +156,23 @@
   .buzzer-status.lotado { background: #2a1416; border-color: #ff7b72; color: #ff7b72; animation: pulse 0.8s infinite; }
   @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 #ff7b7255; } 50% { box-shadow: 0 0 0 10px #ff7b7200; } }
 
+  /* Botão e modal do Wokwi */
+  .wokwi-btn { background: linear-gradient(135deg, #58a6ff, #3fb950); color: #0d1117; border: none; font-weight: 700; font-size: 1rem; padding: 12px 22px; border-radius: 10px; cursor: pointer; transition: transform 0.12s, box-shadow 0.2s; }
+  .wokwi-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(88,166,255,0.3); }
+  .wokwi-link { color: #8b949e; font-size: 0.9rem; text-decoration: none; }
+  .wokwi-link:hover { color: #58a6ff; }
+
+  .wokwi-modal { position: fixed; inset: 0; background: rgba(1,4,9,0.94); display: none; z-index: 300; padding: 32px; }
+  .wokwi-modal.open { display: flex; }
+  .wokwi-frame-wrap { margin: auto; width: min(1100px, 95vw); height: min(720px, 90vh); background: #161b22; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .wokwi-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: #0d1117; border-bottom: 1px solid #30363d; font-size: 0.9rem; color: #c9d1d9; }
+  .wokwi-bar .wk-open { color: #58a6ff; text-decoration: none; font-weight: 600; margin-right: 14px; }
+  .wokwi-bar .wk-close { background: none; border: none; color: #8b949e; font-size: 1.1rem; cursor: pointer; }
+  .wokwi-bar .wk-close:hover { color: #f0f6fc; }
+  .wokwi-body { position: relative; flex: 1; }
+  .wokwi-body .wokwi-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 40px; color: #8b949e; font-size: 1rem; line-height: 1.6; }
+  .wokwi-body iframe { position: relative; width: 100%; height: 100%; border: none; background: transparent; }
+
   /* Top progress bar */
   .pbar { position: fixed; top: 0; left: 0; height: 3px; width: 100%; background: #21262d; z-index: 120; }
   .pbar-fill { height: 100%; width: 0; background: linear-gradient(90deg, #58a6ff, #3fb950); transition: width 0.35s ease; }
@@ -387,13 +404,17 @@ ESP32 DevKit V1
       <div class="box"><div class="label">Plataforma</div><div class="value">Wokwi · ESP32 DevKit V1</div></div>
       <div class="box"><div class="label">Linguagem</div><div class="value">MicroPython v1.22</div></div>
       <div class="box"><div class="label">Sensores</div><div class="value">2× HC-SR04 (distância configurável)</div></div>
-      <div class="box"><div class="label">Atuadores</div><div class="value">4× LED + 1× Buzzer PWM</div></div>
+      <div class="box"><div class="label">Atuadores</div><div class="value">4× LED + Buzzer PWM</div></div>
     </div>
-    <ul style="margin-top:28px">
-      <li>Clique no sensor → slider muda a distância em tempo real</li>
-      <li>LED troca de cor instantaneamente ao cruzar os <strong>20 cm</strong></li>
-      <li>Buzzer ativa quando <strong>as duas vagas</strong> ficam ocupadas ao mesmo tempo</li>
+    <ul style="margin-top:24px">
+      <li>Clique no sensor HC-SR04 → o slider muda a distância em tempo real</li>
+      <li>O LED troca de cor ao cruzar os <strong>20 cm</strong> (verde ↔ vermelho)</li>
+      <li>O buzzer dá um <strong>beep de 1 segundo</strong> no momento em que a segunda vaga enche</li>
     </ul>
+    <div style="margin-top:26px; display:flex; gap:16px; align-items:center; flex-wrap:wrap">
+      <button class="wokwi-btn" onclick="openWokwi()">▶ Abrir simulação no Wokwi</button>
+      <a class="wokwi-link" href="https://wokwi.com/projects/465089138268468225" target="_blank" rel="noopener">ou abrir em nova aba ↗</a>
+    </div>
     <div class="slide-number"></div>
   </div>
 
@@ -501,6 +522,23 @@ DEPOIS:
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()"><img id="lightboxImg" src="" alt=""></div>
 
+<!-- Modal Wokwi -->
+<div class="wokwi-modal" id="wokwiModal">
+  <div class="wokwi-frame-wrap">
+    <div class="wokwi-bar">
+      <span>Simulação Wokwi — SmartPark PUC</span>
+      <div>
+        <a class="wk-open" href="https://wokwi.com/projects/465089138268468225" target="_blank" rel="noopener">Abrir em nova aba ↗</a>
+        <button class="wk-close" onclick="closeWokwi()" title="Fechar (Esc)">✕</button>
+      </div>
+    </div>
+    <div class="wokwi-body">
+      <div class="wokwi-fallback">Carregando… se a simulação não aparecer, o Wokwi bloqueou o embed neste navegador — use <strong>"Abrir em nova aba ↗"</strong> no topo.</div>
+      <iframe id="wokwiFrame" title="Simulação Wokwi" allow="fullscreen" loading="lazy"></iframe>
+    </div>
+  </div>
+</div>
+
 <!-- Overview grid -->
 <div class="overview" id="overview">
   <h3>Visão geral — clique para ir ao slide  ·  (tecla O para fechar)</h3>
@@ -579,6 +617,15 @@ DEPOIS:
   function toggleOverview() { document.getElementById('overview').classList.toggle('open'); }
   function closeOverview() { document.getElementById('overview').classList.remove('open'); }
 
+  // ---- Modal Wokwi ----
+  const WOKWI_URL = 'https://wokwi.com/projects/465089138268468225';
+  function openWokwi() {
+    const frame = document.getElementById('wokwiFrame');
+    if (!frame.src) frame.src = WOKWI_URL;   // carrega só na 1ª vez
+    document.getElementById('wokwiModal').classList.add('open');
+  }
+  function closeWokwi() { document.getElementById('wokwiModal').classList.remove('open'); }
+
   // ---- Fullscreen ----
   function toggleFullscreen() {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen();
@@ -587,7 +634,7 @@ DEPOIS:
 
   // ---- Teclado ----
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeLightbox(); closeOverview(); return; }
+    if (e.key === 'Escape') { closeLightbox(); closeOverview(); closeWokwi(); return; }
     if (e.key.toLowerCase() === 'o') { toggleOverview(); return; }
     if (e.key.toLowerCase() === 'f') { toggleFullscreen(); return; }
     if (document.getElementById('overview').classList.contains('open')) return;
