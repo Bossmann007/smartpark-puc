@@ -277,9 +277,9 @@ O dashboard recebe dados via MQTT e exibe o estado das vagas em tempo real.
 
 | Função | Integrante |
 |--------|-----------|
-| Firmware MicroPython & Arquitetura | [Enzo Bossmann](https://github.com/Bossmann007) |
+| Firmware MicroPython, Arquitetura & Slides | [Enzo Bossmann](https://github.com/Bossmann007) |
 | Dashboard Processing & Simulação Wokwi | Gabriel Henrique |
-| Slides & Relatório | Diego Feltrin |
+| Firmware MicroPython & Relatório | Diego Feltrin |
 
 ---
 
