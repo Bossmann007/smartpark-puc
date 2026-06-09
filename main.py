@@ -51,12 +51,12 @@ LED_R1 = Pin(4,  Pin.OUT)   # vermelho vaga 1
 LED_V2 = Pin(22, Pin.OUT)   # verde vaga 2
 LED_R2 = Pin(23, Pin.OUT)   # vermelho vaga 2
 
-# Buzzer passivo no pino 25. So criamos o PWM quando o estacionamento
-# fica lotado; fora disso o pino fica em LOW (silencio). Isso evita o
-# buzzer tocar sem parar no Wokwi.
-PINO_BUZZER = Pin(25, Pin.OUT)
-PINO_BUZZER.off()
-buzzer_pwm = None
+# Buzzer passivo no pino 25 via PWM. O som so existe quando o duty e
+# maior que zero; com duty(0) o buzzer fica em silencio total. Esse e
+# o padrao que o Wokwi reconhece para ligar/desligar o buzzer.
+buzzer = PWM(Pin(25))
+buzzer.freq(1000)
+buzzer.duty(0)   # comeca em silencio
 
 # Estado inicial: as duas vagas comecam LIVRES (verde ligado).
 # Isso evita LEDs em estado indefinido enquanto a placa liga.
@@ -95,16 +95,11 @@ def atualizar_led(ocupada, verde, vermelho):
 
 
 def atualizar_buzzer(lotado):
-    """Liga o buzzer quando lotado; desliga (silencio total) quando nao."""
-    global buzzer_pwm
+    """Apita (duty 512) quando lotado; silencia (duty 0) quando nao."""
     if lotado:
-        if buzzer_pwm is None:
-            buzzer_pwm = PWM(PINO_BUZZER, freq=1000, duty=512)
+        buzzer.duty(512)
     else:
-        if buzzer_pwm is not None:
-            buzzer_pwm.deinit()
-            buzzer_pwm = None
-        PINO_BUZZER.off()
+        buzzer.duty(0)
 
 
 def conectar_wifi():

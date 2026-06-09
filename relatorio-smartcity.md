@@ -75,7 +75,7 @@ Um CPS é um sistema onde software e hardware estão integrados e se comunicam c
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │  MicroPython - main.py              Computation      │  │
 │  │  medir_distancia() → distância em cm                │  │
-│  │  set_led() · set_buzzer() · publicar()              │  │
+│  │  atualizar_led() · atualizar_buzzer() · MQTT        │  │
 │  └──────────────────────────────────────────────────────┘  │
 │                                                            │
 │  [LED V/R Vaga 1]  [LED V/R Vaga 2]  ← Atuador Visual     │

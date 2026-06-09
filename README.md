@@ -57,7 +57,7 @@ Um sensor HC-SR04 por vaga conectado ao ESP32. Se detectar objeto a menos de 20 
            │           SENSING             │
 ┌──────────▼───────────────────────────────▼──────────────┐
 │                  ESP32 DevKit V1                         │
-│  COMPUTATION: medir_distancia() → set_led() → MQTT      │
+│  COMPUTATION: medir_distancia() → atualizar_led() → MQTT │
 │                                                         │
 │  [🟢/🔴 LED Vaga 1]    [🟢/🔴 LED Vaga 2]   ACTUATION  │
 │  [🔊 Buzzer — lotado]                                   │
@@ -87,13 +87,10 @@ smartpark-puc/
 ├── main.py                  # Firmware MicroPython (ESP32)
 ├── diagram.json             # Circuito Wokwi
 ├── relatorio-smartcity.md   # Relatório completo do projeto
-├── slides-smartpark.html    # Slides da apresentação (abrir no browser)
-└── DashboardProcessingimg/  # Screenshots do dashboard Processing
-    ├── VagasLivres.png
-    ├── VagasOcupadas.png
-    ├── Vaga1Ocupada.png
-    └── Vaga2Ocupada.png
+└── slides-smartpark.html    # Slides da apresentação (abrir no browser)
 ```
+
+> As capturas do dashboard Processing são exibidas nos slides e no vídeo da apresentação.
 
 ---
 
@@ -107,11 +104,11 @@ O firmware está em [`main.py`](main.py) e roda direto no ESP32 com MicroPython.
 | Função | O que faz |
 |--------|-----------|
 | `medir_distancia(trig, echo)` | Dispara pulso ultrassônico e retorna distância em cm |
-| `set_led(ocupada, verde, vermelho)` | Acende o LED correto conforme status da vaga |
-| `set_buzzer(lotado)` | Liga buzzer PWM 1kHz quando estacionamento está lotado |
+| `atualizar_led(ocupada, verde, vermelho)` | Acende o LED correto conforme status da vaga |
+| `atualizar_buzzer(lotado)` | Liga buzzer PWM 1kHz quando estacionamento está lotado |
 | `conectar_wifi()` | Conecta ao WiFi com até 10 tentativas, retorna True/False |
-| `publicar(client, payload)` | Serializa e publica JSON no tópico MQTT |
-| `main()` | Loop principal: lê sensores → atualiza LEDs → publica se mudou |
+| `conectar_mqtt()` | Cria e conecta o cliente MQTT, retorna o cliente ou None |
+| `main()` | Loop principal: lê sensores → atualiza LEDs/buzzer → publica se mudou |
 
 ### Trecho principal
 
@@ -122,8 +119,9 @@ LED_V2.on();  LED_R2.off()   # Vaga 2: livre
 
 # No loop:
 d1 = medir_distancia(TRIG1, ECHO1)
-ocup1 = d1 < LIMIAR_CM          # True se dist < 20 cm
-set_led(ocup1, LED_V1, LED_R1)  # Vermelho se ocupada, verde se livre
+ocup1 = d1 < LIMIAR_CM               # True se dist < 20 cm
+atualizar_led(ocup1, LED_V1, LED_R1) # Vermelho se ocupada, verde se livre
+atualizar_buzzer(ocup1 and ocup2)    # Apita só com as duas ocupadas
 ```
 
 ### Payload MQTT
@@ -251,9 +249,7 @@ O dashboard recebe dados via MQTT e exibe o estado das vagas em tempo real.
 
 ### Screenshots
 
-| Vagas Livres | Vagas Ocupadas |
-|:-----------:|:--------------:|
-| ![Vagas Livres](DashboardProcessingimg/VagasLivres.png) | ![Vagas Ocupadas](DashboardProcessingimg/VagasOcupadas.png) |
+As capturas de tela do dashboard (vagas livres, vagas ocupadas e cada vaga individual) são apresentadas nos **slides** (`slides-smartpark.html`) e no **vídeo** da apresentação.
 
 </details>
 
