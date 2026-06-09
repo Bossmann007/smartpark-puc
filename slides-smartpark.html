@@ -109,8 +109,21 @@
   .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .gallery figure { margin: 0; cursor: zoom-in; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; background: #161b22; transition: transform 0.2s, border-color 0.2s; }
   .gallery figure:hover { transform: translateY(-3px); border-color: #58a6ff; }
-  .gallery img { width: 100%; display: block; aspect-ratio: 16/10; object-fit: cover; }
+  .gallery img { width: 100%; display: block; aspect-ratio: 16/10; object-fit: contain; background: #0d1117; }
   .gallery figcaption { font-size: 0.78rem; color: #8b949e; padding: 6px 10px; text-align: center; }
+
+  /* Diagrama CPS interativo (nativo SVG) */
+  .cps-stage { display: grid; grid-template-columns: 1.55fr 1fr; gap: 28px; align-items: center; }
+  .cps-svg { width: 100%; height: auto; }
+  .cps-svg .layer { cursor: pointer; transition: opacity 0.2s; }
+  .cps-svg .layer .lbox { transition: transform 0.15s, filter 0.2s; transform-box: fill-box; transform-origin: center; }
+  .cps-svg.dim .layer:not(.hot) { opacity: 0.32; }
+  .cps-svg .layer.hot .lbox { filter: brightness(1.18); transform: scale(1.03); }
+  .cps-panel { background: #161b22; border: 1px solid #30363d; border-left: 4px solid #58a6ff; border-radius: 10px; padding: 22px 24px; min-height: 180px; transition: border-color 0.2s; }
+  .cps-panel .cp-tag { font-size: 0.72rem; letter-spacing: 1.5px; text-transform: uppercase; color: #58a6ff; font-weight: 700; }
+  .cps-panel .cp-title { font-size: 1.25rem; color: #f0f6fc; font-weight: 700; margin: 6px 0 12px; }
+  .cps-panel .cp-desc { font-size: 0.98rem; color: #c9d1d9; line-height: 1.55; }
+  .cps-hint { text-align: center; color: #8b949e; font-size: 0.85rem; margin-top: 14px; }
 
   /* Lightbox */
   .lightbox { position: fixed; inset: 0; background: rgba(1,4,9,0.92); display: none; align-items: center; justify-content: center; z-index: 300; cursor: zoom-out; padding: 40px; }
@@ -251,6 +264,83 @@ ESP32 DevKit V1
         <tr><td>Actuation</td><td>LED + Buzzer + Dashboard</td><td>Sinaliza visualmente, sonoramente e na tela (digital → físico)</td></tr>
       </tbody>
     </table>
+    <div class="slide-number"></div>
+  </div>
+
+  <!-- SLIDE 4.5 — Diagrama Funcional CPS (interativo) -->
+  <div class="slide" data-title="Diagrama Funcional CPS">
+    <div class="tag">Diagrama Funcional</div>
+    <h2>O fluxo do sistema — passe o mouse nas camadas</h2>
+    <div class="cps-stage">
+      <svg class="cps-svg" id="cpsSvg" viewBox="0 0 740 540" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#8b949e"></path>
+          </marker>
+        </defs>
+        <!-- setas -->
+        <g stroke="#8b949e" stroke-width="2" fill="none" marker-end="url(#arr)">
+          <line x1="190" y1="118" x2="330" y2="150"></line>
+          <line x1="550" y1="118" x2="410" y2="150"></line>
+          <line x1="220" y1="232" x2="180" y2="298"></line>
+          <line x1="520" y1="232" x2="560" y2="298"></line>
+        </g>
+
+        <!-- SENSING -->
+        <g class="layer" data-tag="Sensing" data-title="Aquisição de dados"
+           data-desc="Dois sensores ultrassônicos HC-SR04 medem a distância até o carro e transformam o mundo físico em dados digitais (cm).">
+          <rect class="lbox" x="20" y="15" width="700" height="100" rx="12" fill="#58a6ff" fill-opacity="0.10" stroke="#58a6ff"></rect>
+          <text x="34" y="36" fill="#58a6ff" font-size="13" font-weight="700" font-family="sans-serif">SENSING</text>
+          <rect x="70" y="46" width="260" height="56" rx="8" fill="#0d1117" stroke="#30363d"></rect>
+          <text x="200" y="70" text-anchor="middle" fill="#e6edf3" font-size="14" font-family="sans-serif">HC-SR04 · Vaga 1</text>
+          <text x="200" y="90" text-anchor="middle" fill="#8b949e" font-size="12" font-family="sans-serif">GPIO 5 / 18</text>
+          <rect x="410" y="46" width="260" height="56" rx="8" fill="#0d1117" stroke="#30363d"></rect>
+          <text x="540" y="70" text-anchor="middle" fill="#e6edf3" font-size="14" font-family="sans-serif">HC-SR04 · Vaga 2</text>
+          <text x="540" y="90" text-anchor="middle" fill="#8b949e" font-size="12" font-family="sans-serif">GPIO 19 / 21</text>
+        </g>
+
+        <!-- COMPUTATION -->
+        <g class="layer" data-tag="Computation" data-title="Processamento no ESP32"
+           data-desc="O ESP32 roda o firmware MicroPython: lê a distância e decide se a vaga está ocupada (dist < 20 cm) ou livre.">
+          <rect class="lbox" x="20" y="150" width="700" height="80" rx="12" fill="#a371f7" fill-opacity="0.12" stroke="#a371f7"></rect>
+          <text x="34" y="170" fill="#a371f7" font-size="13" font-weight="700" font-family="sans-serif">COMPUTATION</text>
+          <rect x="70" y="176" width="600" height="46" rx="8" fill="#0d1117" stroke="#30363d"></rect>
+          <text x="370" y="195" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-family="sans-serif">ESP32 DevKit V1 · MicroPython · main.py</text>
+          <text x="370" y="213" text-anchor="middle" fill="#8b949e" font-size="12" font-family="sans-serif">dist &lt; 20 cm → OCUPADA   |   ≥ 20 cm → LIVRE</text>
+        </g>
+
+        <!-- ACTUATION -->
+        <g class="layer" data-tag="Actuation" data-title="Atuação (digital → físico)"
+           data-desc="Dois atuadores: os LEDs sinalizam visualmente (verde/vermelho) e o buzzer apita quando as duas vagas estão ocupadas.">
+          <rect class="lbox" x="20" y="300" width="340" height="220" rx="12" fill="#3fb950" fill-opacity="0.10" stroke="#3fb950"></rect>
+          <text x="34" y="320" fill="#3fb950" font-size="13" font-weight="700" font-family="sans-serif">ACTUATION</text>
+          <rect x="45" y="332" width="290" height="68" rx="8" fill="#0d1117" stroke="#30363d"></rect>
+          <text x="190" y="360" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-family="sans-serif">4× LED (verde · vermelho)</text>
+          <text x="190" y="380" text-anchor="middle" fill="#8b949e" font-size="12" font-family="sans-serif">GPIO 2, 4, 22, 23 · 220Ω</text>
+          <rect x="45" y="416" width="290" height="68" rx="8" fill="#0d1117" stroke="#30363d"></rect>
+          <text x="190" y="444" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-family="sans-serif">Buzzer Passivo · PWM 1 kHz</text>
+          <text x="190" y="464" text-anchor="middle" fill="#8b949e" font-size="12" font-family="sans-serif">GPIO 25 · duty 50% · lotado</text>
+        </g>
+
+        <!-- COMMUNICATION -->
+        <g class="layer" data-tag="Communication" data-title="Comunicação via MQTT"
+           data-desc="O ESP32 publica o estado das vagas em JSON no tópico smartpark/vagas via WiFi + MQTT — só quando o estado muda.">
+          <rect class="lbox" x="380" y="300" width="340" height="220" rx="12" fill="#d29922" fill-opacity="0.10" stroke="#d29922"></rect>
+          <text x="394" y="320" fill="#d29922" font-size="13" font-weight="700" font-family="sans-serif">COMMUNICATION</text>
+          <rect x="405" y="345" width="290" height="68" rx="8" fill="#0d1117" stroke="#30363d"></rect>
+          <text x="550" y="373" text-anchor="middle" fill="#e6edf3" font-size="13.5" font-family="sans-serif">WiFi + MQTT v3.1.1</text>
+          <text x="550" y="393" text-anchor="middle" fill="#8b949e" font-size="12" font-family="sans-serif">tópico: smartpark/vagas</text>
+          <text x="550" y="445" text-anchor="middle" fill="#8b949e" font-size="11.5" font-family="monospace">{ "vaga1": {"ocupada": true}, ... }</text>
+        </g>
+      </svg>
+
+      <div class="cps-panel" id="cpsPanel">
+        <div class="cp-tag" id="cpTag">Sistema Ciberfísico</div>
+        <div class="cp-title" id="cpTitle">As 4 camadas do SmartPark</div>
+        <div class="cp-desc" id="cpDesc">Passe o mouse (ou toque) em cada camada do diagrama para ver o que ela faz no fluxo do sistema.</div>
+      </div>
+    </div>
+    <div class="cps-hint">Sensing → Computation → Actuation + Communication — o ciclo completo de um CPS.</div>
     <div class="slide-number"></div>
   </div>
 
@@ -514,6 +604,40 @@ DEPOIS:
     const dx = tx - e.changedTouches[0].clientX;
     if (Math.abs(dx) > 50) go(dx > 0 ? 1 : -1);
   });
+
+  // ---- Diagrama CPS interativo ----
+  (function initCps() {
+    const svg = document.getElementById('cpsSvg');
+    if (!svg) return;
+    const tagEl = document.getElementById('cpTag');
+    const titEl = document.getElementById('cpTitle');
+    const descEl = document.getElementById('cpDesc');
+    const panel = document.getElementById('cpsPanel');
+    const cores = { Sensing: '#58a6ff', Computation: '#a371f7', Actuation: '#3fb950', Communication: '#d29922' };
+    const def = { tag: tagEl.textContent, tit: titEl.textContent, desc: descEl.textContent };
+
+    svg.querySelectorAll('.layer').forEach(layer => {
+      const ativar = () => {
+        svg.classList.add('dim');
+        svg.querySelectorAll('.layer').forEach(l => l.classList.remove('hot'));
+        layer.classList.add('hot');
+        tagEl.textContent = layer.dataset.tag;
+        titEl.textContent = layer.dataset.title;
+        descEl.textContent = layer.dataset.desc;
+        panel.style.borderLeftColor = cores[layer.dataset.tag] || '#58a6ff';
+        tagEl.style.color = cores[layer.dataset.tag] || '#58a6ff';
+      };
+      layer.addEventListener('mouseenter', ativar);
+      layer.addEventListener('click', ativar);
+    });
+
+    svg.addEventListener('mouseleave', () => {
+      svg.classList.remove('dim');
+      svg.querySelectorAll('.layer').forEach(l => l.classList.remove('hot'));
+      tagEl.textContent = def.tag; titEl.textContent = def.tit; descEl.textContent = def.desc;
+      panel.style.borderLeftColor = '#58a6ff'; tagEl.style.color = '#58a6ff';
+    });
+  })();
 
   // Inicializa
   show(0);
