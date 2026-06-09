@@ -1,16 +1,17 @@
-# ATENCAO: este arquivo foi sincronizado com o main.py oficial do SmartPark.
-# A versao anterior aqui era de outro projeto (Blynk + servo + DHT22) e NAO
-# deve ser usada. Para o Wokwi, use sempre este codigo (igual ao da raiz).
+# ATENCAO: arquivo sincronizado com o main.py oficial do SmartPark.
+# A versao antiga aqui era de outro projeto (Blynk + servo + DHT22) e NAO deve ser usada.
 #
 # Grupo: Enzo Bossmann, Gabriel Henrique e Diego Feltrin
 # Problema: Monitoramento de vagas de estacionamento (Sistema Ciberfisico)
 # Disciplina: Fundamentos de Sistemas Ciberfisicos — PUCPR
 # Placa: ESP32 + 2x HC-SR04 + 4 LEDs + buzzer | Comunicacao: MQTT
 
-import machine
-import time
-import network
-import ujson
+from machine import Pin, PWM, time_pulse_us
+from utime import sleep, sleep_us
+from network import WLAN, STA_IF
+from ujson import dumps
+
+print("Hello, ESP32 — SmartPark!")
 
 try:
     from umqtt.simple import MQTTClient
@@ -32,17 +33,17 @@ CLIENT_ID   = "esp32-smartpark"
 LIMIAR_CM = 20
 
 # ===== PINOS =====
-TRIG1 = machine.Pin(5,  machine.Pin.OUT)
-ECHO1 = machine.Pin(18, machine.Pin.IN)
-TRIG2 = machine.Pin(19, machine.Pin.OUT)
-ECHO2 = machine.Pin(21, machine.Pin.IN)
+TRIG1 = Pin(5,  Pin.OUT)
+ECHO1 = Pin(18, Pin.IN)
+TRIG2 = Pin(19, Pin.OUT)
+ECHO2 = Pin(21, Pin.IN)
 
-LED_V1 = machine.Pin(2,  machine.Pin.OUT)
-LED_R1 = machine.Pin(4,  machine.Pin.OUT)
-LED_V2 = machine.Pin(22, machine.Pin.OUT)
-LED_R2 = machine.Pin(23, machine.Pin.OUT)
+LED_V1 = Pin(2,  Pin.OUT)
+LED_R1 = Pin(4,  Pin.OUT)
+LED_V2 = Pin(22, Pin.OUT)
+LED_R2 = Pin(23, Pin.OUT)
 
-buzzer = machine.PWM(machine.Pin(25), freq=1000, duty=0)
+buzzer = PWM(Pin(25), freq=1000, duty=0)
 
 LED_V1.on()
 LED_R1.off()
@@ -57,11 +58,11 @@ def medir_distancia(trig, echo):
     """Dispara um pulso ultrassonico e retorna a distancia em cm.
     Retorna 999 se nao houver eco (timeout)."""
     trig.off()
-    time.sleep_us(2)
+    sleep_us(2)
     trig.on()
-    time.sleep_us(10)
+    sleep_us(10)
     trig.off()
-    duracao = machine.time_pulse_us(echo, 1, 30000)
+    duracao = time_pulse_us(echo, 1, 30000)
     if duracao < 0:
         return 999.0
     return (duracao * 0.0343) / 2.0
@@ -87,14 +88,14 @@ def atualizar_buzzer(lotado):
 
 def conectar_wifi():
     """Tenta conectar no WiFi por ate 10 segundos. Retorna True se conectou."""
-    wlan = network.WLAN(network.STA_IF)
+    wlan = WLAN(STA_IF)
     wlan.active(True)
     wlan.connect(WIFI_SSID, WIFI_PASS)
     for tentativa in range(20):
         if wlan.isconnected():
             print(f"WiFi conectado — IP {wlan.ifconfig()[0]}")
             return True
-        time.sleep(0.5)
+        sleep(0.5)
     print("WiFi nao conectou — modo offline")
     return False
 
@@ -139,7 +140,7 @@ def main():
                 "vaga1": {"ocupada": ocup1, "dist_cm": round(d1, 1)},
                 "vaga2": {"ocupada": ocup2, "dist_cm": round(d2, 1)},
             }
-            texto = ujson.dumps(payload)
+            texto = dumps(payload)
             print(f"Estado: {texto}")
             if client:
                 try:
@@ -150,7 +151,7 @@ def main():
 
         ant1 = ocup1
         ant2 = ocup2
-        time.sleep(1)
+        sleep(1)
 
 
 main()

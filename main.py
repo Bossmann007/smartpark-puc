@@ -8,10 +8,12 @@
 # (LED vermelho). Se nao, esta LIVRE (LED verde). Se as duas vagas
 # ficam ocupadas, o buzzer apita (estacionamento lotado).
 
-import machine
-import time
-import network
-import ujson
+from machine import Pin, PWM, time_pulse_us
+from utime import sleep, sleep_us
+from network import WLAN, STA_IF
+from ujson import dumps
+
+print("Hello, ESP32 — SmartPark!")
 
 # umqtt pode nao existir no simulador; se faltar, roda em modo offline
 try:
@@ -38,19 +40,19 @@ LIMIAR_CM = 20
 
 # ===== PINOS =====
 # Sensores HC-SR04 (TRIG = saida que dispara, ECHO = entrada que mede)
-TRIG1 = machine.Pin(5,  machine.Pin.OUT)
-ECHO1 = machine.Pin(18, machine.Pin.IN)
-TRIG2 = machine.Pin(19, machine.Pin.OUT)
-ECHO2 = machine.Pin(21, machine.Pin.IN)
+TRIG1 = Pin(5,  Pin.OUT)
+ECHO1 = Pin(18, Pin.IN)
+TRIG2 = Pin(19, Pin.OUT)
+ECHO2 = Pin(21, Pin.IN)
 
 # LEDs — verde = vaga livre, vermelho = vaga ocupada
-LED_V1 = machine.Pin(2,  machine.Pin.OUT)   # verde vaga 1
-LED_R1 = machine.Pin(4,  machine.Pin.OUT)   # vermelho vaga 1
-LED_V2 = machine.Pin(22, machine.Pin.OUT)   # verde vaga 2
-LED_R2 = machine.Pin(23, machine.Pin.OUT)   # vermelho vaga 2
+LED_V1 = Pin(2,  Pin.OUT)   # verde vaga 1
+LED_R1 = Pin(4,  Pin.OUT)   # vermelho vaga 1
+LED_V2 = Pin(22, Pin.OUT)   # verde vaga 2
+LED_R2 = Pin(23, Pin.OUT)   # vermelho vaga 2
 
 # Buzzer passivo controlado por PWM (apita quando lotado)
-buzzer = machine.PWM(machine.Pin(25), freq=1000, duty=0)
+buzzer = PWM(Pin(25), freq=1000, duty=0)
 
 # Estado inicial: as duas vagas comecam LIVRES (verde ligado).
 # Isso evita LEDs em estado indefinido enquanto a placa liga.
@@ -67,11 +69,11 @@ def medir_distancia(trig, echo):
     """Dispara um pulso ultrassonico e retorna a distancia em cm.
     Retorna 999 se nao houver eco (timeout)."""
     trig.off()
-    time.sleep_us(2)
+    sleep_us(2)
     trig.on()
-    time.sleep_us(10)
+    sleep_us(10)
     trig.off()
-    duracao = machine.time_pulse_us(echo, 1, 30000)
+    duracao = time_pulse_us(echo, 1, 30000)
     if duracao < 0:
         return 999.0
     # velocidade do som = 0.0343 cm/us; divide por 2 (ida e volta)
@@ -98,14 +100,14 @@ def atualizar_buzzer(lotado):
 
 def conectar_wifi():
     """Tenta conectar no WiFi por ate 10 segundos. Retorna True se conectou."""
-    wlan = network.WLAN(network.STA_IF)
+    wlan = WLAN(STA_IF)
     wlan.active(True)
     wlan.connect(WIFI_SSID, WIFI_PASS)
     for tentativa in range(20):
         if wlan.isconnected():
             print(f"WiFi conectado — IP {wlan.ifconfig()[0]}")
             return True
-        time.sleep(0.5)
+        sleep(0.5)
     print("WiFi nao conectou — modo offline")
     return False
 
@@ -154,7 +156,7 @@ def main():
                 "vaga1": {"ocupada": ocup1, "dist_cm": round(d1, 1)},
                 "vaga2": {"ocupada": ocup2, "dist_cm": round(d2, 1)},
             }
-            texto = ujson.dumps(payload)
+            texto = dumps(payload)
             print(f"Estado: {texto}")
             if client:
                 try:
@@ -165,7 +167,7 @@ def main():
 
         ant1 = ocup1
         ant2 = ocup2
-        time.sleep(1)
+        sleep(1)
 
 
 main()
