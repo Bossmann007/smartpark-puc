@@ -92,15 +92,13 @@ Um CPS é um sistema onde software e hardware estão integrados e se comunicam c
 
 ### Protocolo MQTT
 
-**Tópico:** `smartpark/vagas`  
-**Formato do payload:**
+O ESP32 publica nos mesmos tópicos que o dashboard Processing (PegadaCampus) assina:
 
-```json
-{
-  "vaga1": { "ocupada": true,  "dist_cm": 12.3 },
-  "vaga2": { "ocupada": false, "dist_cm": 47.8 }
-}
-```
+| Tópico | Payload | Significado |
+|--------|---------|-------------|
+| `smartpark/puc/vaga1` | `0` / `1` | 0 = livre, 1 = ocupada |
+| `smartpark/puc/vaga2` | `0` / `1` | 0 = livre, 1 = ocupada |
+| `smartpark/puc/status` | `{"v1":0,"v2":1}` | estado das duas vagas em JSON |
 
 A gente publica só quando o estado muda — não fica mandando a mesma informação repetida toda hora. Isso reduziu bastante o tráfego na rede.
 

@@ -132,14 +132,13 @@ if lotado and not lotado_ant:        # só na transição para lotado
 
 ### Payload MQTT
 
-**Tópico:** `smartpark/vagas` — publicado **apenas quando o estado muda**
+**Tópicos** (publicados **apenas quando o estado muda**, e assinados pelo dashboard Processing):
 
-```json
-{
-  "vaga1": { "ocupada": true,  "dist_cm": 12.3 },
-  "vaga2": { "ocupada": false, "dist_cm": 47.8 }
-}
-```
+| Tópico | Payload | Significado |
+|--------|---------|-------------|
+| `smartpark/puc/vaga1` | `0` ou `1` | 0 = livre · 1 = ocupada |
+| `smartpark/puc/vaga2` | `0` ou `1` | 0 = livre · 1 = ocupada |
+| `smartpark/puc/status` | `{"v1":0,"v2":1}` | estado das duas vagas em JSON |
 
 ### Compatibilidade Wokwi
 

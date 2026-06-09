@@ -173,6 +173,33 @@
   .wokwi-body .wokwi-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 40px; color: #8b949e; font-size: 1rem; line-height: 1.6; }
   .wokwi-body iframe { position: relative; width: 100%; height: 100%; border: none; background: transparent; }
 
+  /* Dashboard SmartPark recriado (tema claro, igual ao Processing) */
+  .dash-app { background: #EAF2EC; border-radius: 14px; padding: 16px; color: #18241E; display: grid; grid-template-columns: 1.7fr 1fr; gap: 14px; font-family: 'Segoe UI', system-ui, sans-serif; }
+  .dash-status { grid-column: 1 / -1; display: flex; align-items: center; gap: 9px; color: #55645B; font-size: 0.8rem; }
+  .dash-status .sdot { width: 11px; height: 11px; border-radius: 50%; background: #EFAE1E; box-shadow: 0 0 8px #EFAE1E; }
+  .dash-card { background: #fff; border: 1px solid #E5ECE7; border-radius: 12px; padding: 14px 16px; border-top: 4px solid #2C7FD2; }
+  .dash-card.green { border-top-color: #1E875A; }
+  .dash-card h4 { text-align: center; color: #2C7FD2; font-size: 1rem; margin-bottom: 12px; }
+  .dash-card.green h4 { color: #1E875A; }
+  .dvagas { display: flex; gap: 14px; justify-content: center; }
+  .dvaga { flex: 1; max-width: 220px; border: 2.4px solid #1E875A; background: #EAF6EF; border-radius: 12px; padding: 14px; text-align: center; cursor: pointer; position: relative; transition: transform 0.1s; }
+  .dvaga:hover { transform: translateY(-2px); }
+  .dvaga.occ { border-color: #E0564E; background: #FBEAE9; }
+  .dvaga .dled { position: absolute; top: 12px; right: 12px; width: 18px; height: 18px; border-radius: 50%; background: #2FAE78; box-shadow: 0 0 12px #2FAE78; }
+  .dvaga.occ .dled { background: #E0564E; box-shadow: 0 0 12px #E0564E; animation: pulse 0.8s infinite; }
+  .dvaga .dtit { font-weight: 700; color: #18241E; font-size: 0.95rem; }
+  .dvaga .dcar { font-size: 2.4rem; height: 46px; line-height: 46px; }
+  .dvaga .dstat { font-weight: 700; font-size: 1.05rem; color: #1E875A; }
+  .dvaga.occ .dstat { color: #E0564E; }
+  .dash-legend { display: flex; gap: 18px; justify-content: center; margin-top: 12px; font-size: 0.78rem; color: #55645B; }
+  .dash-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dash-legend i { width: 13px; height: 13px; border-radius: 3px; display: inline-block; }
+  .dash-co2 { margin-top: 12px; background: #EAF6EF; border-radius: 8px; padding: 9px 12px; text-align: center; color: #1E875A; font-size: 0.78rem; }
+  .dstatcard { background: #fff; border: 1px solid #E5ECE7; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+  .dstatcard .dl { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #55645B; }
+  .dstatcard .dv { font-size: 1.5rem; font-weight: 700; }
+  .dash-hint { text-align: center; color: #8b949e; font-size: 0.85rem; margin-top: 14px; }
+
   /* Top progress bar */
   .pbar { position: fixed; top: 0; left: 0; height: 3px; width: 100%; background: #21262d; z-index: 120; }
   .pbar-fill { height: 100%; width: 0; background: linear-gradient(90deg, #58a6ff, #3fb950); transition: width 0.35s ease; }
@@ -476,6 +503,50 @@ ESP32 DevKit V1
     <div class="slide-number"></div>
   </div>
 
+  <!-- SLIDE 8.5 — Dashboard interativo (recriação nativa do Processing) -->
+  <div class="slide" data-title="Dashboard ao vivo">
+    <div class="tag">Dashboard ao vivo</div>
+    <h2>Recriação do dashboard — clique nas vagas</h2>
+    <div class="dash-app">
+      <div class="dash-status">
+        <span class="sdot"></span>
+        <span id="dashStatusTxt">Modo demonstração · sem ESP32 · dados simulados para visualização</span>
+      </div>
+
+      <div class="dash-card">
+        <h4>Estacionamento PUC-PR · bloco monitorado</h4>
+        <div class="dvagas">
+          <div class="dvaga" id="dv1" onclick="dashToggle(1)">
+            <div class="dled"></div>
+            <div class="dtit">VAGA 1</div>
+            <div class="dcar">🚗</div>
+            <div class="dstat">LIVRE</div>
+          </div>
+          <div class="dvaga" id="dv2" onclick="dashToggle(2)">
+            <div class="dled"></div>
+            <div class="dtit">VAGA 2</div>
+            <div class="dcar">🚗</div>
+            <div class="dstat">LIVRE</div>
+          </div>
+        </div>
+        <div class="dash-legend">
+          <span><i style="background:#1E875A"></i> Livre (LED verde aceso)</span>
+          <span><i style="background:#E0564E"></i> Ocupada (LED vermelho aceso)</span>
+        </div>
+        <div class="dash-co2">Cada minuto procurando vaga emite ~0,03 kg CO₂ · o SmartPark elimina buscas desnecessárias</div>
+      </div>
+
+      <div class="dash-card green">
+        <h4>Estatísticas ao vivo</h4>
+        <div class="dstatcard"><div class="dl">Vagas livres</div><div class="dv" id="dStatLivres" style="color:#1E875A">2 de 2</div></div>
+        <div class="dstatcard"><div class="dl">Total de eventos</div><div class="dv" id="dStatEventos" style="color:#18241E">0</div></div>
+        <div class="dstatcard"><div class="dl">CO₂ potencialmente poupado</div><div class="dv" id="dStatCo2" style="color:#1E875A">0,000 kg</div></div>
+      </div>
+    </div>
+    <div class="dash-hint">Recriação web fiel ao dashboard em Processing (PegadaCampus) — o app real recebe estes dados do ESP32 via MQTT (<code>smartpark/puc/vaga1·2·status</code>).</div>
+    <div class="slide-number"></div>
+  </div>
+
   <!-- SLIDE 9 — Impacto -->
   <div class="slide" data-title="Impacto">
     <div class="tag">Impacto</div>
@@ -685,6 +756,32 @@ DEPOIS:
       panel.style.borderLeftColor = '#58a6ff'; tagEl.style.color = '#58a6ff';
     });
   })();
+
+  // ---- Dashboard interativo (recriação do Processing) ----
+  const dash = { livre: [true, true], eventos: 0, somaMs: 0, ts: [0, 0] };
+  function dashToggle(num) {
+    const i = num - 1;
+    const ocupando = dash.livre[i];          // estava livre -> vai ocupar
+    dash.livre[i] = !dash.livre[i];
+    if (ocupando) { dash.eventos++; dash.ts[i] = Date.now(); }
+    else if (dash.ts[i]) { dash.somaMs += Date.now() - dash.ts[i]; }
+
+    const card = document.getElementById('dv' + num);
+    card.classList.toggle('occ', !dash.livre[i]);
+    card.querySelector('.dstat').textContent = dash.livre[i] ? 'LIVRE' : 'OCUPADA';
+    card.querySelector('.dcar').style.visibility = dash.livre[i] ? 'hidden' : 'visible';
+
+    const livres = (dash.livre[0] ? 1 : 0) + (dash.livre[1] ? 1 : 0);
+    const elL = document.getElementById('dStatLivres');
+    elL.textContent = livres + ' de 2';
+    elL.style.color = livres === 2 ? '#1E875A' : (livres === 1 ? '#EFAE1E' : '#E0564E');
+    document.getElementById('dStatEventos').textContent = dash.eventos;
+    const tmMin = dash.eventos > 0 ? (dash.somaMs / dash.eventos / 60000) : 0;
+    const co2 = dash.eventos * tmMin * 0.03;
+    document.getElementById('dStatCo2').textContent = co2.toFixed(3).replace('.', ',') + ' kg';
+  }
+  // esconde o carro nas vagas livres no início
+  document.querySelectorAll('.dvaga .dcar').forEach(c => c.style.visibility = 'hidden');
 
   // Inicializa
   show(0);

@@ -32,8 +32,13 @@ WIFI_PASS = ""
 
 MQTT_BROKER = "broker.hivemq.com"   # broker publico para teste
 MQTT_PORT   = 1883
-MQTT_TOPIC  = "smartpark/vagas"
 CLIENT_ID   = "esp32-smartpark"
+
+# Topicos MQTT — os mesmos que o dashboard Processing (PegadaCampus) assina.
+# Convencao do payload: "0" = vaga LIVRE, "1" = vaga OCUPADA.
+TOPICO_VAGA1  = "smartpark/puc/vaga1"
+TOPICO_VAGA2  = "smartpark/puc/vaga2"
+TOPICO_STATUS = "smartpark/puc/status"
 
 # Distancia em cm abaixo da qual a vaga e considerada ocupada
 LIMIAR_CM = 20
@@ -162,15 +167,15 @@ def main():
 
         # So publica/imprime quando o estado de alguma vaga muda
         if ocup1 != ant1 or ocup2 != ant2:
-            payload = {
-                "vaga1": {"ocupada": ocup1, "dist_cm": round(d1, 1)},
-                "vaga2": {"ocupada": ocup2, "dist_cm": round(d2, 1)},
-            }
-            texto = dumps(payload)
-            print(f"Estado: {texto}")
+            v1 = "1" if ocup1 else "0"   # 1 = ocupada, 0 = livre
+            v2 = "1" if ocup2 else "0"
+            status = dumps({"v1": int(ocup1), "v2": int(ocup2)})
+            print(f"Vagas -> v1={v1}  v2={v2}  status={status}")
             if client:
                 try:
-                    client.publish(MQTT_TOPIC, texto.encode())
+                    client.publish(TOPICO_VAGA1, v1.encode())
+                    client.publish(TOPICO_VAGA2, v2.encode())
+                    client.publish(TOPICO_STATUS, status.encode())
                 except Exception as erro:
                     print(f"Erro ao publicar: {erro}")
                     client = None   # desiste do MQTT e segue offline
