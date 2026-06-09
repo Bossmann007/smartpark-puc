@@ -87,10 +87,13 @@ smartpark-puc/
 ├── main.py                  # Firmware MicroPython (ESP32)
 ├── diagram.json             # Circuito Wokwi
 ├── relatorio-smartcity.md   # Relatório completo do projeto
-└── slides-smartpark.html    # Slides da apresentação (abrir no browser)
+├── slides-smartpark.html    # Slides da apresentação (abrir no browser)
+└── DashboardProcessingimg/  # Screenshots do dashboard Processing
+    ├── VagasLivres.png
+    ├── VagasOcupadas.png
+    ├── Vaga1Ocupada.png
+    └── Vaga2Ocupada.png
 ```
-
-> As capturas do dashboard Processing são exibidas nos slides e no vídeo da apresentação.
 
 ---
 
@@ -249,7 +252,11 @@ O dashboard recebe dados via MQTT e exibe o estado das vagas em tempo real.
 
 ### Screenshots
 
-As capturas de tela do dashboard (vagas livres, vagas ocupadas e cada vaga individual) são apresentadas nos **slides** (`slides-smartpark.html`) e no **vídeo** da apresentação.
+| Vagas Livres | Vagas Ocupadas |
+|:-----------:|:--------------:|
+| ![Vagas Livres](DashboardProcessingimg/VagasLivres.png) | ![Vagas Ocupadas](DashboardProcessingimg/VagasOcupadas.png) |
+| **Vaga 1 Ocupada** | **Vaga 2 Ocupada** |
+| ![Vaga 1 Ocupada](DashboardProcessingimg/Vaga1Ocupada.png) | ![Vaga 2 Ocupada](DashboardProcessingimg/Vaga2Ocupada.png) |
 
 </details>
 
