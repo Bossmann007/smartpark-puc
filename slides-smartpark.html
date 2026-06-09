@@ -446,29 +446,6 @@ ESP32 DevKit V1
     <div class="slide-number"></div>
   </div>
 
-  <!-- SLIDE 7 — Demo Interativa -->
-  <div class="slide" data-title="Demo Interativa">
-    <div class="tag">Demo Interativa</div>
-    <h2>Clique nas vagas pra simular o sistema</h2>
-    <div class="demo-wrap">
-      <div class="vaga" data-vaga="0" onclick="toggleVaga(0)">
-        <div class="led-dot"></div>
-        <div class="car">🚗</div>
-        <div class="vlabel">Vaga 1</div>
-        <div class="status">LIVRE</div>
-      </div>
-      <div class="vaga" data-vaga="1" onclick="toggleVaga(1)">
-        <div class="led-dot"></div>
-        <div class="car">🚗</div>
-        <div class="vlabel">Vaga 2</div>
-        <div class="status">LIVRE</div>
-      </div>
-    </div>
-    <div class="buzzer-status" id="buzzerStatus">🔈 Buzzer em silêncio</div>
-    <div class="demo-hint">Mesma lógica do firmware: vaga ocupada acende o LED vermelho; as duas ocupadas disparam o buzzer.</div>
-    <div class="slide-number"></div>
-  </div>
-
   <!-- SLIDE 8.5 — Dashboard interativo (recriação nativa do Processing) -->
   <div class="slide" data-title="Dashboard ao vivo">
     <div class="tag">Dashboard ao vivo</div>
@@ -592,13 +569,11 @@ DEPOIS:
   <button onclick="toggleFullscreen()" title="Tela cheia (F)">⛶</button>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.10.1/mqtt.min.js"></script>
 <script>
   const slides = Array.from(document.querySelectorAll('.slide'));
   const total = slides.length;
   let cur = 0;
-
-  // Estado da demo interativa
-  const ocupada = [false, false];
 
   // Monta numeros, bolinhas e visao geral dinamicamente
   const dotsEl = document.getElementById('dots');
@@ -629,19 +604,6 @@ DEPOIS:
     dots.forEach((d, i) => d.classList.toggle('active', i === cur));
   }
   function go(dir) { show(cur + dir); }
-
-  // ---- Demo interativa ----
-  function toggleVaga(i) {
-    ocupada[i] = !ocupada[i];
-    const card = document.querySelector('.vaga[data-vaga="' + i + '"]');
-    card.classList.toggle('occupied', ocupada[i]);
-    card.querySelector('.status').textContent = ocupada[i] ? 'OCUPADA' : 'LIVRE';
-
-    const lotado = ocupada[0] && ocupada[1];
-    const bz = document.getElementById('buzzerStatus');
-    bz.classList.toggle('lotado', lotado);
-    bz.textContent = lotado ? '🔊 LOTADO — buzzer apitando!' : '🔈 Buzzer em silêncio';
-  }
 
   // ---- Lightbox ----
   function openLightbox(src) {
@@ -746,6 +708,40 @@ DEPOIS:
     const co2 = dash.eventos * tmMin * 0.03;
     document.getElementById('dStatCo2').textContent = co2.toFixed(3).replace('.', ',') + ' kg';
   }
+  // Define estado absoluto da vaga (usado pelo MQTT); reaproveita dashToggle.
+  function dashApply(num, ocupada) {
+    if (dash.livre[num - 1] === !ocupada) return;
+    dashToggle(num);
+  }
+
+  // ---- Integracao ao vivo: assina o MQTT (HiveMQ) por WebSocket ----
+  // Quando o ESP32 no Wokwi publica, o dashboard atualiza sozinho.
+  (function initMqtt() {
+    if (typeof mqtt === 'undefined') return;
+    var statusTxt = document.getElementById('dashStatusTxt');
+    var dot = document.querySelector('.dash-status .sdot');
+    var client;
+    try { client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt'); } catch (e) { return; }
+    client.on('connect', function () {
+      client.subscribe('smartpark/puc/vaga1');
+      client.subscribe('smartpark/puc/vaga2');
+      if (statusTxt) statusTxt.textContent = 'Conectado ao broker MQTT \u00b7 aguardando o ESP32 (Wokwi) publicar';
+      if (dot) { dot.style.background = '#2FAE78'; dot.style.boxShadow = '0 0 8px #2FAE78'; }
+    });
+    client.on('message', function (topic, payload) {
+      var msg = payload.toString().trim().toLowerCase();
+      var livre = (msg === '0' || msg === 'livre' || msg === 'free' || msg === 'false');
+      if (topic === 'smartpark/puc/vaga1') dashApply(1, !livre);
+      else if (topic === 'smartpark/puc/vaga2') dashApply(2, !livre);
+      if (statusTxt) statusTxt.textContent = 'ESP32 conectado \u00b7 dados em tempo real via MQTT \u00b7 broker.hivemq.com';
+    });
+    client.on('error', function () {});
+    client.on('offline', function () {
+      if (statusTxt) statusTxt.textContent = 'Modo demonstra\u00e7\u00e3o \u00b7 sem MQTT \u00b7 clique nas vagas';
+      if (dot) { dot.style.background = '#EFAE1E'; dot.style.boxShadow = '0 0 8px #EFAE1E'; }
+    });
+  })();
+
   // esconde o carro nas vagas livres no início
   document.querySelectorAll('.dvaga .dcar').forEach(c => c.style.visibility = 'hidden');
 
