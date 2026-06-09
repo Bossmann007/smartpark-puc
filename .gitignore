@@ -20,3 +20,7 @@ Screenshot_*.png
 # OS
 .DS_Store
 Thumbs.db
+
+# Notas de sessao/checkup do vault (pessoais)
+2026-* — Sess*.md
+Checkup de Codigo*.md

@@ -1,19 +1,17 @@
+# ATENCAO: este arquivo foi sincronizado com o main.py oficial do SmartPark.
+# A versao anterior aqui era de outro projeto (Blynk + servo + DHT22) e NAO
+# deve ser usada. Para o Wokwi, use sempre este codigo (igual ao da raiz).
+#
 # Grupo: Enzo Bossmann, Gabriel Henrique e Diego Feltrin
 # Problema: Monitoramento de vagas de estacionamento (Sistema Ciberfisico)
 # Disciplina: Fundamentos de Sistemas Ciberfisicos — PUCPR
 # Placa: ESP32 + 2x HC-SR04 + 4 LEDs + buzzer | Comunicacao: MQTT
-#
-# Logica: cada vaga tem um sensor de distancia. Se um carro fica
-# perto do sensor (distancia abaixo do limiar), a vaga esta OCUPADA
-# (LED vermelho). Se nao, esta LIVRE (LED verde). Se as duas vagas
-# ficam ocupadas, o buzzer apita (estacionamento lotado).
 
 import machine
 import time
 import network
 import ujson
 
-# umqtt pode nao existir no simulador; se faltar, roda em modo offline
 try:
     from umqtt.simple import MQTTClient
     MQTT_DISPONIVEL = True
@@ -23,37 +21,29 @@ except ImportError:
 
 
 # ===== CONFIGURACOES =====
-# No simulador Wokwi a unica rede e a "Wokwi-GUEST" (senha vazia).
-# Para a placa real, troque pelos dados da rede do estacionamento.
 WIFI_SSID = "Wokwi-GUEST"
 WIFI_PASS = ""
 
-MQTT_BROKER = "broker.hivemq.com"   # broker publico para teste
+MQTT_BROKER = "broker.hivemq.com"
 MQTT_PORT   = 1883
 MQTT_TOPIC  = "smartpark/vagas"
 CLIENT_ID   = "esp32-smartpark"
 
-# Distancia em cm abaixo da qual a vaga e considerada ocupada
 LIMIAR_CM = 20
 
 # ===== PINOS =====
-# Sensores HC-SR04 (TRIG = saida que dispara, ECHO = entrada que mede)
 TRIG1 = machine.Pin(5,  machine.Pin.OUT)
 ECHO1 = machine.Pin(18, machine.Pin.IN)
 TRIG2 = machine.Pin(19, machine.Pin.OUT)
 ECHO2 = machine.Pin(21, machine.Pin.IN)
 
-# LEDs — verde = vaga livre, vermelho = vaga ocupada
-LED_V1 = machine.Pin(2,  machine.Pin.OUT)   # verde vaga 1
-LED_R1 = machine.Pin(4,  machine.Pin.OUT)   # vermelho vaga 1
-LED_V2 = machine.Pin(22, machine.Pin.OUT)   # verde vaga 2
-LED_R2 = machine.Pin(23, machine.Pin.OUT)   # vermelho vaga 2
+LED_V1 = machine.Pin(2,  machine.Pin.OUT)
+LED_R1 = machine.Pin(4,  machine.Pin.OUT)
+LED_V2 = machine.Pin(22, machine.Pin.OUT)
+LED_R2 = machine.Pin(23, machine.Pin.OUT)
 
-# Buzzer passivo controlado por PWM (apita quando lotado)
 buzzer = machine.PWM(machine.Pin(25), freq=1000, duty=0)
 
-# Estado inicial: as duas vagas comecam LIVRES (verde ligado).
-# Isso evita LEDs em estado indefinido enquanto a placa liga.
 LED_V1.on()
 LED_R1.off()
 LED_V2.on()
@@ -74,7 +64,6 @@ def medir_distancia(trig, echo):
     duracao = machine.time_pulse_us(echo, 1, 30000)
     if duracao < 0:
         return 999.0
-    # velocidade do som = 0.0343 cm/us; divide por 2 (ida e volta)
     return (duracao * 0.0343) / 2.0
 
 
@@ -132,23 +121,19 @@ def main():
     if wifi_ok:
         client = conectar_mqtt()
 
-    # Guarda o estado anterior de cada vaga para so publicar quando mudar
     ant1 = None
     ant2 = None
 
     while True:
-        # Le os dois sensores e decide se cada vaga esta ocupada
         d1 = medir_distancia(TRIG1, ECHO1)
         d2 = medir_distancia(TRIG2, ECHO2)
         ocup1 = d1 < LIMIAR_CM
         ocup2 = d2 < LIMIAR_CM
 
-        # Atualiza LEDs e buzzer
         atualizar_led(ocup1, LED_V1, LED_R1)
         atualizar_led(ocup2, LED_V2, LED_R2)
         atualizar_buzzer(ocup1 and ocup2)
 
-        # So publica/imprime quando o estado de alguma vaga muda
         if ocup1 != ant1 or ocup2 != ant2:
             payload = {
                 "vaga1": {"ocupada": ocup1, "dist_cm": round(d1, 1)},
@@ -161,7 +146,7 @@ def main():
                     client.publish(MQTT_TOPIC, texto.encode())
                 except Exception as erro:
                     print(f"Erro ao publicar: {erro}")
-                    client = None   # desiste do MQTT e segue offline
+                    client = None
 
         ant1 = ocup1
         ant2 = ocup2
