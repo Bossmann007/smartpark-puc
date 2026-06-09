@@ -24,3 +24,6 @@ Thumbs.db
 # Notas de sessao/checkup do vault (pessoais)
 2026-* — Sess*.md
 Checkup de Codigo*.md
+
+# Pasta de base do Wokwi (arquivos oficiais ficam na raiz)
+Wokiwbase/
