@@ -94,12 +94,12 @@ def atualizar_led(ocupada, verde, vermelho):
         vermelho.off()
 
 
-def atualizar_buzzer(lotado):
-    """Apita (duty 512) quando lotado; silencia (duty 0) quando nao."""
-    if lotado:
-        buzzer.duty(512)
-    else:
-        buzzer.duty(0)
+def apitar():
+    """Toca o buzzer por exatamente 1 segundo e depois silencia.
+    Usado so no momento em que o estacionamento fica lotado."""
+    buzzer.duty(512)   # liga o som
+    sleep(1)           # toca por 1 segundo
+    buzzer.duty(0)     # desliga o som
 
 
 def conectar_wifi():
@@ -141,6 +141,7 @@ def main():
     # Guarda o estado anterior de cada vaga para so publicar quando mudar
     ant1 = None
     ant2 = None
+    lotado_ant = False   # estado anterior de "lotado" (para apitar so na mudanca)
 
     while True:
         # Le os dois sensores e decide se cada vaga esta ocupada
@@ -149,10 +150,15 @@ def main():
         ocup1 = d1 < LIMIAR_CM
         ocup2 = d2 < LIMIAR_CM
 
-        # Atualiza LEDs e buzzer
+        # Atualiza os LEDs das duas vagas
         atualizar_led(ocup1, LED_V1, LED_R1)
         atualizar_led(ocup2, LED_V2, LED_R2)
-        atualizar_buzzer(ocup1 and ocup2)
+
+        # Buzzer: apita 1 segundo SO no momento em que as duas vagas enchem
+        lotado = ocup1 and ocup2
+        if lotado and not lotado_ant:
+            apitar()
+        lotado_ant = lotado
 
         # So publica/imprime quando o estado de alguma vaga muda
         if ocup1 != ant1 or ocup2 != ant2:

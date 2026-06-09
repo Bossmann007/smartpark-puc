@@ -108,7 +108,7 @@ O firmware está em [`main.py`](main.py) e roda direto no ESP32 com MicroPython.
 |--------|-----------|
 | `medir_distancia(trig, echo)` | Dispara pulso ultrassônico e retorna distância em cm |
 | `atualizar_led(ocupada, verde, vermelho)` | Acende o LED correto conforme status da vaga |
-| `atualizar_buzzer(lotado)` | Liga buzzer PWM 1kHz quando estacionamento está lotado |
+| `apitar()` | Toca o buzzer (PWM 1kHz) por 1 segundo quando o estacionamento lota |
 | `conectar_wifi()` | Conecta ao WiFi com até 10 tentativas, retorna True/False |
 | `conectar_mqtt()` | Cria e conecta o cliente MQTT, retorna o cliente ou None |
 | `main()` | Loop principal: lê sensores → atualiza LEDs/buzzer → publica se mudou |
@@ -124,7 +124,10 @@ LED_V2.on();  LED_R2.off()   # Vaga 2: livre
 d1 = medir_distancia(TRIG1, ECHO1)
 ocup1 = d1 < LIMIAR_CM               # True se dist < 20 cm
 atualizar_led(ocup1, LED_V1, LED_R1) # Vermelho se ocupada, verde se livre
-atualizar_buzzer(ocup1 and ocup2)    # Apita só com as duas ocupadas
+
+lotado = ocup1 and ocup2
+if lotado and not lotado_ant:        # só na transição para lotado
+    apitar()                         # beep de 1 segundo
 ```
 
 ### Payload MQTT
